@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bijli Tracker - Smart Energy Dashboard</title>
+  <style>
+    :root {
+      --primary: #4f46e5;
+      --primary-light: #e0e7ff;
+      --secondary: #06b6d4;
+      --accent-coral: #f43f5e;
+      --accent-amber: #f59e0b;
+      --accent-emerald: #10b981;
+      --accent-purple: #8b5cf6;
+      --bg-light: #f8fafc;
+      --card-bg: #ffffff;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --border-color: #e2e8f0;
+      --radius: 14px;
+      --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.03);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-light);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top Navigation */
+    header {
+      background: #ffffff;
+      border-bottom: 1px solid var(--border-color);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: var(--primary);
+    }
+
+    .brand span {
+      background: linear-gradient(135deg, var(--accent-coral), var(--accent-amber));
+      color: white;
+      padding: 4px 8px;
+      border-radius: 8px;
+      font-size: 1rem;
+    }
+
+    nav {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+    }
+
+    .nav-btn {
+      background: transparent;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 30px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .nav-btn.active {
+      background: var(--primary);
+      color: white;
+      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+    }
+
+    .nav-btn:hover:not(.active) {
+      background: var(--primary-light);
+      color: var(--primary);
+    }
+
+    /* Main Container */
+    main {
+      flex: 1;
+      max-width: 1100px;
+      width: 100%;
+      margin: 20px auto;
+      padding: 0 20px 40px 20px;
+    }
+
+    .tab-content {
+      display: none;
+      animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Common Card Styles */
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 24px;
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow);
+      margin-bottom: 20px;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+
+    .card-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+    }
+
+    /* Form Controls */
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.5px solid var(--border-color);
+      border-radius: 10px;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input:focus, select:focus {
+      border-color: var(--primary);
+    }
+
+    .btn {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: transform 0.1s, background-color 0.2s;
+    }
+
+    .btn:hover {
+      background: #4338ca;
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    .btn-coral { background: var(--accent-coral); }
+    .btn-coral:hover { background: #e11d48; }
+
+    .btn-emerald { background: var(--accent-emerald); }
+    .btn-emerald:hover { background: #059669; }
+
+    /* Stat Cards */
+    .stat-box {
+      padding: 18px;
+      border-radius: 12px;
+      background: #f8fafc;
+      border-left: 4px solid var(--primary);
+    }
+
+    .stat-label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .stat-val {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: var(--text-main);
+      margin-top: 4px;
+    }
+
+    /* Scanner Simulation */
+    .scanner-box {
+      border: 2px dashed #cbd5e1;
+      border-radius: var(--radius);
+      padding: 30px;
+      text-align: center;
+      background: #f8fafc;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .scanner-box:hover {
+      border-color: var(--primary);
+      background: var(--primary-light);
+    }
+
+    /* Progress & Slabs */
+    .progress-bar-container {
+      width: 100%;
+      height: 14px;
+      background: #e2e8f0;
+      border-radius: 20px;
+      overflow: hidden;
+      margin: 10px 0;
+      position: relative;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent-emerald), var(--accent-amber), var(--accent-coral));
+      border-radius: 20px;
+      transition: width 0.4s ease;
+    }
+
+    /* Appliance List */
+    .appliance-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      margin-bottom: 10px;
+    }
+
+    .tag {
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+
+    .tag-high { background: #ffe4e6; color: #e11d48; }
+    .tag-mid { background: #fef3c7; color: #d97706; }
+    .tag-low { background: #dcfce7; color: #15803d; }
+
+    /* Alert Banner */
+    .alert {
+      padding: 14px 18px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+      font-weight: 500;
+    }
+
+    .alert-danger {
+      background: #fff1f2;
+      color: #be123c;
+      border: 1px solid #fecdd3;
+    }
+
+    .alert-warning {
+      background: #fffbeb;
+      color: #b45309;
+      border: 1px solid #fde68a;
+    }
+
+    .alert-success {
+      background: #f0fdf4;
+      color: #15803d;
+      border: 1px solid #bbf7d0;
+    }
+
+    /* Table */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 0.9rem;
+    }
+
+    th {
+      color: var(--text-muted);
+      font-weight: 700;
+      background: #f8fafc;
+    }
+
+    @media (max-width: 768px) {
+      header {
+        flex-direction: column;
+        gap: 12px;
+        align-items: flex-start;
+        padding: 1rem;
+      }
+      nav {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <span>⚡</span> Bijli Tracker
+    </div>
+    <nav>
+      <button class="nav-btn active" onclick="switchTab('page-scan')">1. Scan Bill</button>
+      <button class="nav-btn" onclick="switchTab('page-appliances')">2. Appliances & Predict</button>
+      <button class="nav-btn" onclick="switchTab('page-slab')">3. Slab Calculator</button>
+      <button class="nav-btn" onclick="switchTab('page-meter')">4. Pre-Bill Meter Scan</button>
+      <button class="nav-btn" onclick="switchTab('page-tips')">5. Recommendations</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- PAGE 1: SCAN BILL & DETAILS -->
+    <section id="page-scan" class="tab-content active">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">📷 Scan Electricity Bill (OCR Simulator)</div>
+        </div>
+        <div class="scanner-box" onclick="simulateScan()">
+          <div style="font-size: 2.5rem; margin-bottom: 10px;">📄 ➡️ ⚡</div>
+          <p style="font-weight: 700; margin-bottom: 4px;">Click to simulate Bill Camera Capture / Upload</p>
+          <p style="color: var(--text-muted); font-size: 0.85rem;">Automatically extracts consumer data, old units, new units, and active tariff</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🧾 Extracted Bill Information</div>
+          <span id="scanStatus" class="tag tag-low">Awaiting Scan</span>
+        </div>
+        <div class="grid-2">
+          <div>
+            <div class="form-group">
+              <label>Consumer Name</label>
+              <input type="text" id="custName" value="Jayesh Patil" placeholder="e.g. Rahul Sharma" />
+            </div>
+            <div class="form-group">
+              <label>Consumer Number</label>
+              <input type="text" id="custNo" value="049012384729" placeholder="12-digit Consumer No." />
+            </div>
+            <div class="form-group">
+              <label>Tariff Category / Phase</label>
+              <input type="text" id="custTariff" value="LT-1 Residential (Single Phase)" />
+            </div>
+          </div>
+          <div>
+            <div class="form-group">
+              <label>Previous Meter Reading (Old Units)</label>
+              <input type="number" id="oldUnits" value="1420" oninput="updateScanConsumption()" />
+            </div>
+            <div class="form-group">
+              <label>Current Meter Reading (New Units)</label>
+              <input type="number" id="newUnits" value="1707" oninput="updateScanConsumption()" />
+            </div>
+            <div class="form-group">
+              <label>Billing Period (Days)</label>
+              <input type="number" id="billDays" value="30" />
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-3" style="margin-top: 10px;">
+          <div class="stat-box" style="border-left-color: var(--primary);">
+            <div class="stat-label">Billed Consumption</div>
+            <div class="stat-val" id="totalBilledUnits">287 kWh</div>
+          </div>
+          <div class="stat-box" style="border-left-color: var(--accent-amber);">
+            <div class="stat-label">Avg. Daily Usage</div>
+            <div class="stat-val" id="avgDailyUnits">9.5 kWh/day</div>
+          </div>
+          <div class="stat-box" style="border-left-color: var(--accent-emerald);">
+            <div class="stat-label">Approx. Base Bill</div>
+            <div class="stat-val" id="calcBaseCost">₹ 2,420</div>
+          </div>
+        </div>
+
+        <button class="btn btn-emerald" style="width: 100%; margin-top: 20px;" onclick="switchTab('page-appliances')">
+          Confirm Details & Proceed to Appliance Analysis ➔
+        </button>
+      </div>
+    </section>
+
+    <!-- PAGE 2: APPLIANCES & PREDICTION -->
+    <section id="page-appliances" class="tab-content">
+      <div class="grid-2">
+        <!-- Add Appliance -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">🔌 Add Appliance Usage</div>
+          </div>
+          <div class="form-group">
+            <label>Appliance Name</label>
+            <select id="appType" onchange="prefillWattage()">
+              <option value="1.5T Inverter AC" data-watt="1500" data-hours="5">1.5 Ton AC (1500W)</option>
+              <option value="Water Geyser" data-watt="2000" data-hours="1.5">Water Geyser (2000W)</option>
+              <option value="Refrigerator" data-watt="250" data-hours="24">Refrigerator (250W)</option>
+              <option value="Smart TV" data-watt="100" data-hours="4">Smart TV (100W)</option>
+              <option value="Ceiling Fans & Lights" data-watt="200" data-hours="10">Ceiling Fans (200W)</option>
+              <option value="Washing Machine" data-watt="500" data-hours="1">Washing Machine (500W)</option>
+              <option value="Custom" data-watt="0" data-hours="1">Custom Appliance</option>
+            </select>
+          </div>
+          <div class="grid-2">
+            <div class="form-group">
+              <label>Wattage (Watts)</label>
+              <input type="number" id="appWatt" value="1500" />
+            </div>
+            <div class="form-group">
+              <label>Daily Usage (Hours)</label>
+              <input type="number" step="0.5" id="appHours" value="5" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Usage Slot</label>
+            <select id="appSlot">
+              <option value="Night (10 PM - 6 AM)">Night (10 PM - 6 AM)</option>
+              <option value="Peak Evening (6 PM - 10 PM)">Peak Evening (6 PM - 10 PM)</option>
+              <option value="Daytime (6 AM - 6 PM)">Daytime (6 AM - 6 PM)</option>
+              <option value="Continuous 24h">Continuous 24 Hours</option>
+            </select>
+          </div>
+          <button class="btn" style="width: 100%;" onclick="addAppliance()">+ Add to Active Appliances</button>
+        </div>
+
+        <!-- Month End Prediction Engine -->
+        <div class="card" style="background: linear-gradient(145deg, #ffffff, #f1f5f9);">
+          <div class="card-header">
+            <div class="card-title">📊 Consumption & Prediction</div>
+            <span class="tag tag-high">Day 20 of 30</span>
+          </div>
+
+          <div class="stat-box" style="margin-bottom: 14px; border-left-color: var(--accent-coral);">
+            <div class="stat-label">Projected Month-End Usage</div>
+            <div class="stat-val" style="color: var(--accent-coral);" id="projectedUnits">410 kWh</div>
+            <small style="color: var(--text-muted);">Calculated using: Current (287) + Remaining 10 Days @ daily load</small>
+          </div>
+
+          <div class="alert alert-danger" style="margin-bottom: 14px;">
+            ⚠️ <strong>Slab Alert:</strong> Projected to cross 300 unit limit! Units above 300 are billed at high tier (₹11.50/unit).
+          </div>
+
+          <div style="font-size: 0.85rem; font-weight: 600; margin-bottom: 6px;">Month-End Slab Progress</div>
+          <div class="progress-bar-container">
+            <div class="progress-bar" id="applianceProgress" style="width: 82%;"></div>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted);">
+            <span>0 units</span>
+            <span>100 (Tier 1)</span>
+            <span>300 (Tier 2)</span>
+            <span>500+ (Tier 3)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Active Appliance List -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">📋 Household Appliance Breakdown</div>
+          <span style="font-size: 0.85rem; color: var(--text-muted);">Energy (kWh) = (Watts × Hours) ÷ 1000</span>
+        </div>
+        <div id="applianceList">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- PAGE 3: SLAB TIER CALCULATOR -->
+    <section id="page-slab" class="tab-content">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">📈 Slab Tier Tariff Structure (LT-1 Residential)</div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Slab Tier</th>
+              <th>Consumption Range</th>
+              <th>Tariff Rate per Unit</th>
+              <th>Status for Projected Usage (410 kWh)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Slab 1</strong></td>
+              <td>0 - 100 units</td>
+              <td>₹ 3.80 / unit</td>
+              <td><span class="tag tag-low">Filled (100 kWh)</span></td>
+            </tr>
+            <tr>
+              <td><strong>Slab 2</strong></td>
+              <td>101 - 300 units</td>
+              <td>₹ 7.40 / unit</td>
+              <td><span class="tag tag-low">Filled (200 kWh)</span></td>
+            </tr>
+            <tr>
+              <td><strong>Slab 3</strong></td>
+              <td>301 - 500 units</td>
+              <td>₹ 11.50 / unit</td>
+              <td><span class="tag tag-high">Active (110 kWh in tier)</span></td>
+            </tr>
+            <tr>
+              <td><strong>Slab 4</strong></td>
+              <td>501+ units</td>
+              <td>₹ 13.90 / unit</td>
+              <td><span class="tag tag-mid">Safe for now</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🧮 Interactive What-If Simulator</div>
+        </div>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px;">
+          Adjust appliance cutback to prevent entering the expensive ₹11.50/unit Slab 3 tier.
+        </p>
+
+        <div class="form-group">
+          <label id="sliderLabel">Cut down AC daily runtime by: <strong>1.5 Hours/day</strong></label>
+          <input type="range" id="reductionSlider" min="0" max="4" step="0.5" value="1.5" oninput="runWhatIf()" />
+        </div>
+
+        <div class="grid-3" style="margin-top: 20px;">
+          <div class="stat-box" style="border-left-color: var(--secondary);">
+            <div class="stat-label">Monthly Units Saved</div>
+            <div class="stat-val" id="whatifUnits">67.5 kWh</div>
+          </div>
+          <div class="stat-box" style="border-left-color: var(--accent-emerald);">
+            <div class="stat-label">Direct Money Saved</div>
+            <div class="stat-val" id="whatifSavings">₹ 776.25</div>
+          </div>
+          <div class="stat-box" style="border-left-color: var(--accent-purple);">
+            <div class="stat-label">New Projected Units</div>
+            <div class="stat-val" id="whatifNewTotal">342.5 kWh</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PAGE 4: PRE-BILL METER SCAN & DIFFERENCE -->
+    <section id="page-meter" class="tab-content">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🔍 Mid-Month Physical Meter Scanner</div>
+        </div>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px;">
+          Scan your live physical electric meter at home before official meter-reader arrival to catch leaks early.
+        </p>
+
+        <div class="grid-2">
+          <div>
+            <div class="scanner-box" onclick="simulateMeterScan()">
+              <div style="font-size: 2rem;">📸</div>
+              <strong>Point Camera at Digital Meter</strong>
+              <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Click to simulate real-time OCR reading</p>
+            </div>
+
+            <div class="form-group" style="margin-top: 14px;">
+              <label>Live Scanned Meter Reading (kWh)</label>
+              <input type="number" id="liveMeterReading" value="1680" oninput="calculateLiveDiscrepancy()" />
+            </div>
+            <div class="form-group">
+              <label>Start of Month Reference Reading</label>
+              <input type="number" id="baselineReading" value="1420" readonly style="background:#f1f5f9;" />
+            </div>
+          </div>
+
+          <div>
+            <div class="stat-box"style="border-left-color: var(--accent-coral); margin-bottom: 12px;">
+              <div class="stat-label">Actual Consumed So Far</div>
+              <div class="stat-val" id="liveUnitsConsumed">260 kWh</div>
+            </div>
+            <div class="stat-box" style="border-left-color: var(--accent-amber); margin-bottom: 12px;">
+              <div class="stat-label">Units Left to Stay in Slab 2 (≤300)</div>
+              <div class="stat-val" id="unitsLeftSlab">40 kWh remaining</div>
+            </div>
+            <div class="alert alert-warning" id="meterAlertBox">
+              💡 <strong>Action Required:</strong> Only 40 units remaining for the next 10 days. Limit daily use to <strong>4.0 kWh/day</strong> to avoid higher slab charges.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PAGE 5: RECOMMENDATIONS & NOTIFICATIONS -->
+    <section id="page-tips" class="tab-content">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">💡 Tailored Energy Saving Recommendations</div>
+        </div>
+
+        <div class="alert alert-danger">
+          <strong>Priority Alert:</strong> AC accounts for ~55% of your total bill. Focus adjustments here first.
+        </div>
+
+        <div class="grid-2">
+          <div class="stat-box" style="border-left-color: var(--accent-coral);">
+            <h4 style="margin-bottom: 6px;">❄️ Air Conditioner Optimization</h4>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 10px;">
+              Raising temperature from 18°C to 24°C reduces compressor load by up to 24%.
+            </p>
+            <span class="tag tag-high">Est. Monthly Savings: ~60 units (₹ 690)</span>
+          </div>
+
+          <div class="stat-box" style="border-left-color: var(--accent-amber);">
+            <h4 style="margin-bottom: 6px;">🚿 Water Geyser Timing</h4>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 10px;">
+              Turn off geyser 15 minutes before ending your shower. Residual water remains heated.
+            </p>
+            <span class="tag tag-mid">Est. Monthly Savings: ~20 units (₹ 230)</span>
+          </div>
+
+          <div class="stat-box" style="border-left-color: var(--accent-purple);">
+            <h4 style="margin-bottom: 6px;">🔌 Standby Vampire Load</h4>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 10px;">
+              Turn off set-top boxes, Wi-Fi routers at night, and microwave plugs at the socket.
+            </p>
+            <span class="tag tag-low">Est. Monthly Savings: ~12 units (₹ 90)</span>
+          </div>
+
+          <div class="stat-box" style="border-left-color: var(--accent-emerald);">
+            <h4 style="margin-bottom: 6px;">☀️ Solar Capacity Recommendation</h4>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 10px;">
+              Based on your 410 kWh monthly consumption, a <strong>3 kW Rooftop Solar System</strong> will bring your bill near ₹0.
+            </p>
+            <span class="tag tag-low">Payback Period: ~3.5 Years</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // Tab Switching
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+
+      document.getElementById(tabId).classList.add('active');
+      const btnIndex = ['page-scan', 'page-appliances', 'page-slab', 'page-meter', 'page-tips'].indexOf(tabId);
+      if (btnIndex >= 0) {
+        document.querySelectorAll('.nav-btn')[btnIndex].classList.add('active');
+      }
+    }
+
+    // Bill Scanner Simulation
+    function simulateScan() {
+      document.getElementById('scanStatus').innerText = "OCR Extracted Successfully ✓";
+      document.getElementById('scanStatus').className = "tag tag-low";
+      document.getElementById('custName').value = "Jayesh Patil";
+      document.getElementById('custNo').value = "049012384729";
+      document.getElementById('oldUnits').value = 1420;
+      document.getElementById('newUnits').value = 1707;
+      document.getElementById('billDays').value = 30;
+      updateScanConsumption();
+    }
+
+    function updateScanConsumption() {
+      const oldU = parseFloat(document.getElementById('oldUnits').value) || 0;
+      const newU = parseFloat(document.getElementById('newUnits').value) || 0;
+      const diff = Math.max(0, newU - oldU);
+      document.getElementById('totalBilledUnits').innerText = `${diff} kWh`;
+      document.getElementById('avgDailyUnits').innerText = `${(diff / 30).toFixed(1)} kWh/day`;
+      
+      let cost = 0;
+      if (diff <= 100) cost = diff * 3.8;
+      else if (diff <= 300) cost = (100 * 3.8) + (diff - 100) * 7.4;
+      else cost = (100 * 3.8) + (200 * 7.4) + (diff - 300) * 11.5;
+      
+      document.getElementById('calcBaseCost').innerText = `₹ ${Math.round(cost).toLocaleString('en-IN')}`;
+    }
+
+    // Appliance Manager
+    let appliances = [
+      { name: "1.5T Inverter AC", watt: 1500, hours: 5, slot: "Night (10 PM - 6 AM)", tag: "tag-high" },
+      { name: "Water Geyser", watt: 2000, hours: 1.5, slot: "Daytime (6 AM - 6 PM)", tag: "tag-high" },
+      { name: "Refrigerator", watt: 250, hours: 24, slot: "Continuous 24h", tag: "tag-mid" },
+      { name: "Smart TV", watt: 100, hours: 4, slot: "Peak Evening (6 PM - 10 PM)", tag: "tag-low" },
+      { name: "Ceiling Fans & Lights", watt: 200, hours: 10, slot: "Daytime (6 AM - 6 PM)", tag: "tag-low" }
+    ];
+
+    function prefillWattage() {
+      const sel = document.getElementById('appType');
+      const opt = sel.options[sel.selectedIndex];
+      if (opt.value !== 'Custom') {
+        document.getElementById('appWatt').value = opt.getAttribute('data-watt');
+        document.getElementById('appHours').value = opt.getAttribute('data-hours');
+      }
+    }
+
+    function renderAppliances() {
+      const container = document.getElementById('applianceList');
+      container.innerHTML = '';
+      let dailyTotalKwh = 0;
+
+      appliances.forEach((app, idx) => {
+        const kwhPerDay = (app.watt * app.hours) / 1000;
+        dailyTotalKwh += kwhPerDay;
+        const monthlyCost = kwhPerDay * 30 * 9.5; // avg blended tariff
+
+        const item = document.createElement('div');
+        item.className = 'appliance-item';
+        item.innerHTML = `
+          <div>
+            <strong>${app.name}</strong> <span style="font-size:0.8rem; color:var(--text-muted);">(${app.watt}W • ${app.hours} hrs/day • ${app.slot})</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:12px;">
+            <span class="tag ${app.tag}">${kwhPerDay.toFixed(2)} kWh/day</span>
+            <span style="font-weight:700; font-size:0.9rem; color:var(--text-main);">~₹${Math.round(monthlyCost)}/mo</span>
+            <button onclick="removeAppliance(${idx})" style="background:none; border:none; color:var(--accent-coral); cursor:pointer; font-weight:bold;">✕</button>
+          </div>
+        `;
+        container.appendChild(item);
+      });
+
+      // Recalculate Prediction
+      const currentUnits = 287;
+      const remainingDays = 10;
+      const projected = currentUnits + (dailyTotalKwh * remainingDays);
+      document.getElementById('projectedUnits').innerText = `${Math.round(projected)} kWh`;
+      
+      const pct = Math.min(100, (projected / 500) * 100);
+      document.getElementById('applianceProgress').style.width = `${pct}%`;
+    }
+
+    function addAppliance() {
+      const name = document.getElementById('appType').value;
+      const watt = parseFloat(document.getElementById('appWatt').value) || 100;
+      const hours = parseFloat(document.getElementById('appHours').value) || 1;
+      const slot = document.getElementById('appSlot').value;
+      
+      const tag = watt * hours > 5000 ? "tag-high" : (watt * hours > 2000 ? "tag-mid" : "tag-low");
+      appliances.push({ name, watt, hours, slot, tag });
+      renderAppliances();
+    }
+
+    function removeAppliance(idx) {
+      appliances.splice(idx, 1);
+      renderAppliances();
+    }
+
+    // What-If Simulator
+    function runWhatIf() {
+      const reducedHours = parseFloat(document.getElementById('reductionSlider').value);
+      document.getElementById('sliderLabel').innerHTML = `Cut down AC daily runtime by: <strong>${reducedHours} Hours/day</strong>`;
+      
+      const dailyUnitsSaved = (1500 * reducedHours) / 1000;
+      const monthlySaved = dailyUnitsSaved * 30; // ~45 kWh
+      const moneySaved = monthlySaved * 11.50; // top tier rate
+      const newTotal = 410 - monthlySaved;
+
+      document.getElementById('whatifUnits').innerText = `${monthlySaved.toFixed(1)} kWh`;
+      document.getElementById('whatifSavings').innerText = `₹ ${moneySaved.toFixed(2)}`;
+      document.getElementById('whatifNewTotal').innerText = `${newTotal.toFixed(1)} kWh`;
+    }
+
+    // Meter Pre-Scanner
+    function simulateMeterScan() {
+      document.getElementById('liveMeterReading').value = "1688";
+      calculateLiveDiscrepancy();
+    }
+
+    function calculateLiveDiscrepancy() {
+      const live = parseFloat(document.getElementById('liveMeterReading').value) || 1420;
+      const base = parseFloat(document.getElementById('baselineReading').value) || 1420;
+      const used = Math.max(0, live - base);
+      const remainingForSlab = Math.max(0, 300 - used);
+      
+      document.getElementById('liveUnitsConsumed').innerText = `${used} kWh`;
+      document.getElementById('unitsLeftSlab').innerText = `${remainingForSlab} kWh remaining`;
+
+      const alertBox = document.getElementById('meterAlertBox');
+      if (remainingForSlab < 50) {
+        alertBox.className = "alert alert-danger";
+        alertBox.innerHTML = `🚨 <strong>Urgent:</strong> Only ${remainingForSlab} units remaining for the rest of the cycle. Maintain daily consumption below ${(remainingForSlab/10).toFixed(1)} kWh/day to avoid Slab 3!`;
+      } else {
+        alertBox.className = "alert alert-success";
+        alertBox.innerHTML = `✅ <strong>On Track:</strong> You have ${remainingForSlab} units left in Slab 2.`;
+      }
+    }
+
+    // Initial setup
+    renderAppliances();
+    runWhatIf();
+    calculateLiveDiscrepancy();
+  </script>
+</body>
+</html>
